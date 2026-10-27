@@ -2,8 +2,10 @@
 
 import io
 import json
+import os
+import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import worker
 
@@ -51,6 +53,37 @@ class WorkerTests(unittest.TestCase):
         self.assertIn("What is Pandaria?", sent["messages"][1]["content"])
         self.assertNotIn("tools", sent)
         self.assertIs(sent["stream"], False)
+
+    def test_remote_mysql_requires_verified_tls(self):
+        fake_mysql = types.SimpleNamespace(
+            connect=Mock(), cursors=types.SimpleNamespace(DictCursor=object)
+        )
+        variables = {
+            "SKYFIRE_LLM_DB_HOST": "db.example.net",
+            "SKYFIRE_LLM_DB_USER": "limited",
+        }
+        with patch.dict("sys.modules", {"pymysql": fake_mysql}):
+            with patch.dict(os.environ, variables, clear=True):
+                with self.assertRaisesRegex(ValueError, "requires"):
+                    worker.open_database()
+        fake_mysql.connect.assert_not_called()
+
+    def test_remote_mysql_uses_certificate_and_host_validation(self):
+        fake_mysql = types.SimpleNamespace(
+            connect=Mock(), cursors=types.SimpleNamespace(DictCursor=object)
+        )
+        variables = {
+            "SKYFIRE_LLM_DB_HOST": "db.example.net",
+            "SKYFIRE_LLM_DB_USER": "limited",
+            "SKYFIRE_LLM_DB_SSL_CA": "C:/private/mysql-ca.pem",
+        }
+        with patch.dict("sys.modules", {"pymysql": fake_mysql}):
+            with patch.dict(os.environ, variables, clear=True):
+                worker.open_database()
+        kwargs = fake_mysql.connect.call_args.kwargs
+        self.assertEqual(kwargs["ssl_ca"], "C:/private/mysql-ca.pem")
+        self.assertIs(kwargs["ssl_verify_cert"], True)
+        self.assertIs(kwargs["ssl_verify_identity"], True)
 
     def test_finish_job_rejects_unexpected_status(self):
         with self.assertRaises(ValueError):
