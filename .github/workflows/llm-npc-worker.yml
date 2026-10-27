@@ -1,0 +1,25 @@
+name: llm-npc-worker-tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/llm_npc/**"
+      - "src/server/game/LuaEngine/scripts/llm_npc_bridge.lua"
+      - ".github/workflows/llm-npc-worker.yml"
+  pull_request:
+    paths:
+      - "tools/llm_npc/**"
+      - "src/server/game/LuaEngine/scripts/llm_npc_bridge.lua"
+      - ".github/workflows/llm-npc-worker.yml"
+
+jobs:
+  python-unit-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run LLM NPC worker tests
+        run: python -m unittest discover -s tools/llm_npc -p 'test_*.py' -v
