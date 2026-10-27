@@ -10,10 +10,27 @@ On a Windows development machine install [Git for Windows](https://git-scm.com/)
 and [GitHub CLI](https://cli.github.com/), then authenticate using
 `gh auth login`. You need repository-creation permission on your account.
 
-In PowerShell, run:
+In PowerShell, if `C:\SkyFireAI-bootstrap` does **not** exist yet, run:
 
     git clone --single-branch --branch feature/llm-npc-dialogue-bridge-20261027 https://github.com/mrcool72/SkyFire_548.git C:\SkyFireAI-bootstrap
+
+If it **already exists as a Git checkout**, do **not** clone over or delete it.
+Update it without discarding local changes:
+
+    git -C C:\SkyFireAI-bootstrap status --short
+    git -C C:\SkyFireAI-bootstrap pull --ff-only origin feature/llm-npc-dialogue-bridge-20261027
+
+If the status output shows local changes or the pull fails, review them before
+continuing. Never use a forced reset just to get this feature working.
+
+Then run the updated script:
+
     & C:\SkyFireAI-bootstrap\tools\llm_npc\windows\New-SkyFireAIRepository.ps1
+
+The script no longer runs `gh repo view` to test whether a nonexistent
+repository exists: with PowerShell 5.1 that probe can throw a terminating
+`NativeCommandError`. GitHub's `gh repo create` already refuses to
+replace an existing repository.
 
 The script **creates a new private GitHub repository**, clones the entire
 SkyFire code with the feature commits to `C:\SkyFire_548_AI`, renames the
