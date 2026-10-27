@@ -1,0 +1,44 @@
+name: llm-npc-worker-tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tools/llm_npc/**"
+      - "src/server/game/LuaEngine/scripts/llm_npc_bridge.lua"
+      - ".github/workflows/llm-npc-worker.yml"
+  pull_request:
+    paths:
+      - "tools/llm_npc/**"
+      - "src/server/game/LuaEngine/scripts/llm_npc_bridge.lua"
+      - ".github/workflows/llm-npc-worker.yml"
+
+jobs:
+  python-unit-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run LLM NPC worker tests
+        run: python -m unittest discover -s tools/llm_npc -p 'test_*.py' -v
+      - name: Check Eluna bridge Lua syntax
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1
+          luac5.1 -p src/server/game/LuaEngine/scripts/llm_npc_bridge.lua
+      - name: Parse Windows PowerShell scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem 'tools/llm_npc/windows/*.ps1' | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName, [ref]$tokens, [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Host $_.Message }
+              throw ('PowerShell syntax errors in ' + $_.FullName)
+            }
+          }
