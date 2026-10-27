@@ -89,45 +89,7 @@ local function deliver_replies()
         local npc_entry = result:GetUInt32(3)
         local npc_name = result:GetString(4)
         local reply = result:GetString(6)
-        if id:match('^%d+
-            seen_replies[id] = now
-            -- An NPC can only speak if the player is still near the exact
-            -- creature that was asked; otherwise send a private text reply.
-            if npc_entry == NPC_ENTRY and valid_guid(player_guid) and valid_guid(npc_guid) then
-                local player = GetPlayerByGUID(player_guid)
-                if player and player:IsInWorld() then
-                    local npc = player:GetWorldObject(npc_guid)
-                    if npc and npc:GetEntry() == NPC_ENTRY
-                        and player:IsWithinDistInMap(npc, 12) then
-                        npc:SendUnitSay(reply, 0)
-                    else
-                        player:SendBroadcastMessage(npc_name .. ": " .. reply)
-                    end
-                end
-            end
-            WorldDBExecute("UPDATE llm_npc_dialogue SET status = 'delivered' " ..
-                "WHERE id = " .. tostring(id) .. " AND status IN ('done', 'failed')")
-        end
-    until not result:NextRow()
-
-    -- Keep the in-memory deduplication cache bounded.
-    for id, timestamp in pairs(seen_replies) do
-        if now - timestamp > REPLY_MAX_AGE_SECONDS then
-            seen_replies[id] = nil
-        end
-    end
-    for guid, timestamp in pairs(last_question) do
-        if now - timestamp > REPLY_MAX_AGE_SECONDS then
-            last_question[guid] = nil
-        end
-    end
-end
-
-RegisterCreatureGossipEvent(NPC_ENTRY, GOSSIP_HELLO, on_hello)
-RegisterCreatureGossipEvent(NPC_ENTRY, GOSSIP_SELECT, on_select)
-CreateLuaEvent(deliver_replies, 2000, 0)
-print("[Eluna] LLM NPC dialogue bridge enabled for creature entry " .. NPC_ENTRY)
-) and not seen_replies[id] then
+        if id:match('^%d+$') and not seen_replies[id] then
             seen_replies[id] = now
             -- An NPC can only speak if the player is still near the exact
             -- creature that was asked; otherwise send a private text reply.
