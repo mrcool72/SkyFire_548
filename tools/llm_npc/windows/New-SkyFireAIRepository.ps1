@@ -52,12 +52,11 @@ if (Test-Path -LiteralPath $Destination) {
     throw ('Destination already exists: {0}. Choose an unused directory.' -f $Destination)
 }
 
-# Ensure the operator has not already created this repository. GitHub CLI
-# exits nonzero when the repository cannot be found or is not accessible.
-& gh repo view $NewRepo --json nameWithOwner 1>$null 2>$null
-if ($LASTEXITCODE -eq 0) {
-    throw ('Refusing to overwrite an existing repository: {0}' -f $NewRepo)
-}
+# Do NOT probe for an absent repo with "gh repo view": PowerShell 5.1 can
+# turn the expected GitHub 404/GraphQL stderr into a terminating
+# NativeCommandError when ErrorActionPreference is Stop.
+# "gh repo create" refuses an existing repository name by itself, so
+# removing this probe preserves no-overwrite behavior.
 
 $parent = Split-Path -Parent $Destination
 if (-not (Test-Path -LiteralPath $parent)) {
