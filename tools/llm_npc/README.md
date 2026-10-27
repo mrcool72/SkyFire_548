@@ -67,6 +67,7 @@ asynchronous native bridge is the recommended scale-up path.
    | `SKYFIRE_LLM_DB_NAME` | WORLD DB name, default `world` |
    | `SKYFIRE_LLM_DB_USER` | **Required** restricted database username |
    | `SKYFIRE_LLM_DB_PASSWORD` | Password, read from a secret store or private environment |
+   | `SKYFIRE_LLM_DB_SSL_CA` | **Required** for remote MySQL; trusted TLS CA cert path, with hostname verification |
    | `SKYFIRE_LLM_API_URL` | Chat completions URL, default `http://127.0.0.1:11434/v1/chat/completions` |
    | `SKYFIRE_LLM_MODEL` | Model ID, default `llama3.2` |
    | `SKYFIRE_LLM_API_KEY` | Optional Bearer token |
@@ -122,3 +123,5 @@ Nearby players can hear NPC speech like ordinary game dialogue.
 pathfinding, pet battles, autonomous playerbots, LLM memory, or server-side
 action approval. Those require separate in-game parity tests and a
 server-authoritative action allowlist. Use this as a first integration slice.
+
+For a complete Windows Server 2022 setup and independent repo creation, follow [the Windows guide](windows/WINDOWS_SERVER_2022.md).
