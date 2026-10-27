@@ -28,3 +28,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y lua5.1
           luac5.1 -p src/server/game/LuaEngine/scripts/llm_npc_bridge.lua
+      - name: Parse Windows PowerShell scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem 'tools/llm_npc/windows/*.ps1' | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName, [ref]$tokens, [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errors | ForEach-Object { Write-Host $_.Message }
+              throw ('PowerShell syntax errors in ' + $_.FullName)
+            }
+          }
