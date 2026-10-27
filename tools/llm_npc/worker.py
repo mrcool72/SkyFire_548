@@ -84,8 +84,19 @@ def open_database():
     # Lazy import lets the standard-library unit tests run without MySQL.
     import pymysql
 
+    db_host = os.environ.get("SKYFIRE_LLM_DB_HOST", "127.0.0.1")
+    ssl_ca = os.environ.get("SKYFIRE_LLM_DB_SSL_CA", "")
+    # A separate worker must authenticate the MySQL server before sending
+    # chat prompts across the network. Never fall back to plaintext.
+    if db_host not in ("127.0.0.1", "::1", "localhost") and not ssl_ca:
+        raise ValueError("Remote MySQL requires SKYFIRE_LLM_DB_SSL_CA")
+    tls_options = (
+        {"ssl_ca": ssl_ca, "ssl_verify_cert": True, "ssl_verify_identity": True}
+        if ssl_ca else {}
+    )
+
     return pymysql.connect(
-        host=os.environ.get("SKYFIRE_LLM_DB_HOST", "127.0.0.1"),
+        host=db_host,
         port=int(os.environ.get("SKYFIRE_LLM_DB_PORT", "3306")),
         user=os.environ["SKYFIRE_LLM_DB_USER"],
         password=os.environ.get("SKYFIRE_LLM_DB_PASSWORD", ""),
@@ -96,6 +107,7 @@ def open_database():
         read_timeout=5,
         write_timeout=5,
         cursorclass=pymysql.cursors.DictCursor,
+        **tls_options,
     )
 
 
